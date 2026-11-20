@@ -1,0 +1,55 @@
+# Builds the LIFC Compliance OS Android app with Google's official Android SDK on GitHub's servers.
+# Run it from the repository's "Actions" tab → "Build Android APK" → "Run workflow".
+# Without signing secrets it produces a debug-signed APK (fine for internal sideloading/testing).
+# Add these repository secrets to produce a release-signed APK:
+#   CCT_KEYSTORE_BASE64, CCT_KEYSTORE_PASSWORD, CCT_KEY_ALIAS, CCT_KEY_PASSWORD
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "android/**"
+      - ".github/workflows/build-apk.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Build APK
+        env:
+          KS_B64: ${{ secrets.CCT_KEYSTORE_BASE64 }}
+          CCT_KEYSTORE_PASSWORD: ${{ secrets.CCT_KEYSTORE_PASSWORD }}
+          CCT_KEY_ALIAS: ${{ secrets.CCT_KEY_ALIAS }}
+          CCT_KEY_PASSWORD: ${{ secrets.CCT_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            export CCT_KEYSTORE="$RUNNER_TEMP/release.jks"
+            gradle --no-daemon assembleRelease
+          else
+            echo "No signing secrets found – building debug-signed APK"
+            gradle --no-daemon assembleDebug
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LIFC-Compliance-OS-apk
+          path: android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error

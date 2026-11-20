@@ -1,0 +1,42 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.lifc.complianceos'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.lifc.complianceos"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            def ks = System.getenv("CCT_KEYSTORE")
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv("CCT_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("CCT_KEY_ALIAS")
+                keyPassword System.getenv("CCT_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (System.getenv("CCT_KEYSTORE")) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

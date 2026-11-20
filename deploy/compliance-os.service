@@ -1,0 +1,21 @@
+# /etc/systemd/system/compliance-os.service
+[Unit]
+Description=LIFC Compliance OS
+After=network.target
+
+[Service]
+User=compliance
+Group=compliance
+WorkingDirectory=/opt/compliance-os/server
+Environment=CCT_DATA=/var/lib/compliance-os
+Environment=CCT_IDLE_MIN=30
+Environment=CCT_MAX_MB=25
+ExecStart=/opt/compliance-os/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8080 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=always
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/compliance-os
+
+[Install]
+WantedBy=multi-user.target

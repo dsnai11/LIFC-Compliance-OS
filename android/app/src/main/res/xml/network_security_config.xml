@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HTTPS is strongly recommended. Clear-text HTTP is allowed only so the app can reach an
+     internal test server on the office LAN; remove cleartextTrafficPermitted for production. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors><certificates src="system" /></trust-anchors>
+    </base-config>
+</network-security-config>

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Offline – LIFC Compliance</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:18px;font:15px/1.5 system-ui,Roboto,sans-serif;color:#1b1f2a;background:#fbf8f9}
+.card{width:100%;max-width:420px;background:#fff;border-radius:24px;padding:28px 24px;text-align:center;box-shadow:0 20px 40px -24px rgba(70,12,24,.35)}
+img{width:150px;opacity:.9}h1{font-size:19px;margin:10px 0 4px}p{color:#5f6677;font-size:13px;margin:0 0 20px}
+button{width:100%;font:inherit;font-weight:700;border-radius:12px;padding:12px;margin-top:10px}
+.p{color:#fff;border:0;background:linear-gradient(135deg,#d31b3a,#b3122e 45%,#5b0d16)}.s{background:#fff;color:#5b0d16;border:1px solid rgba(91,13,22,.25)}
+</style></head><body>
+<div class="card"><img src="logo.png" alt="LIFC"><h1>Server not reachable</h1><p>Check your network or VPN connection, then try again.</p>
+<button class="p" onclick="AndroidBridge.retry()">Try again</button><button class="s" onclick="AndroidBridge.changeServer()">Change server</button></div>
+</body></html>

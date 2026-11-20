@@ -1,0 +1,2 @@
+# Android Studio creates the Gradle wrapper automatically when you open this folder.
+# For command-line builds use Gradle 8.7+ with JDK 17 (see README.md).
