@@ -8,3 +8,4 @@ android/app/build/
 android/local.properties
 *.jks
 .DS_Store
+ios/build/
