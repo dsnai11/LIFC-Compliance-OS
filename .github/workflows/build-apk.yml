@@ -1,4 +1,4 @@
-# Builds the LIFC Compliance OS Android app with Google's official Android SDK on GitHub's servers.
+# Builds the LIFC Compliance OS Android app (Capacitor project in mobile/) on GitHub's servers.
 # Run it from the repository's "Actions" tab → "Build Android APK" → "Run workflow".
 # Without signing secrets it produces a debug-signed APK (fine for internal sideloading/testing).
 # Add these repository secrets to produce a release-signed APK:
@@ -9,7 +9,8 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "android/**"
+      - "mobile/**"
+      - "web/**"
       - ".github/workflows/build-apk.yml"
 
 jobs:
@@ -17,39 +18,52 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: android
+        working-directory: mobile
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"          # Capacitor 8 requires JDK 21
 
+      # The default package list includes "tools", which the current cmdline-tools no longer have
+      # ("Failed to find package 'tools'"), so list the packages we need explicitly.
       - uses: android-actions/setup-android@v3
-
-      - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.7"
+          packages: "platform-tools platforms;android-36 build-tools;35.0.0"
+
+      - name: Install dependencies and sync Capacitor
+        run: |
+          npm ci
+          npx cap sync android
 
       - name: Build APK
+        working-directory: mobile/android
         env:
           KS_B64: ${{ secrets.CCT_KEYSTORE_BASE64 }}
           CCT_KEYSTORE_PASSWORD: ${{ secrets.CCT_KEYSTORE_PASSWORD }}
           CCT_KEY_ALIAS: ${{ secrets.CCT_KEY_ALIAS }}
           CCT_KEY_PASSWORD: ${{ secrets.CCT_KEY_PASSWORD }}
         run: |
+          chmod +x gradlew
           if [ -n "$KS_B64" ]; then
             echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
             export CCT_KEYSTORE="$RUNNER_TEMP/release.jks"
-            gradle --no-daemon assembleRelease
+            ./gradlew --no-daemon assembleRelease
           else
             echo "No signing secrets found – building debug-signed APK"
-            gradle --no-daemon assembleDebug
+            ./gradlew --no-daemon assembleDebug
           fi
 
       - uses: actions/upload-artifact@v4
         with:
           name: LIFC-Compliance-OS-apk
-          path: android/app/build/outputs/apk/**/*.apk
+          path: mobile/android/app/build/outputs/apk/**/*.apk
           if-no-files-found: error

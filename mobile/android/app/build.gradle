@@ -16,8 +16,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            // Optional release signing, driven by the same environment variables the CI workflow sets.
+            def ks = System.getenv("CCT_KEYSTORE")
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv("CCT_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("CCT_KEY_ALIAS")
+                keyPassword System.getenv("CCT_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
+            if (System.getenv("CCT_KEYSTORE")) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
