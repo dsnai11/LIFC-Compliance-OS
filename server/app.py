@@ -8,7 +8,7 @@ Run:  uvicorn app:app --host 0.0.0.0 --port 8080 --proxy-headers
 import os, json, sqlite3, secrets, hashlib, hmac, time, datetime, threading, re, uuid, copy, tempfile, shutil
 from pathlib import Path
 from fastapi import FastAPI, Request, Response, HTTPException, UploadFile, File, Form
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 
 BASE = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("CCT_DATA", BASE / "data"))
@@ -905,6 +905,26 @@ async def import_state(req: Request):
 @app.get("/")
 def index():
     return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
+
+
+APP_DIR = (STATIC / "app").resolve()
+
+
+@app.get("/app")
+def app_root_redirect():
+    return RedirectResponse("/app/")
+
+
+@app.get("/app/{path:path}")
+def react_app(path: str = ""):
+    """React client (web/ → built into static/app). Unknown paths fall back to index.html (SPA routing)."""
+    f = (APP_DIR / path).resolve()
+    if path and f.is_file() and APP_DIR in f.parents:
+        return FileResponse(f, headers={"Cache-Control": "public, max-age=31536000, immutable" if "/assets/" in f"/{path}" else "no-cache"})
+    idx = APP_DIR / "index.html"
+    if not idx.exists():
+        raise HTTPException(404, "React client not built (run: cd web && npm run build)")
+    return FileResponse(idx, headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/{name}")

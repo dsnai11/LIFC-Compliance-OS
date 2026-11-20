@@ -9,3 +9,8 @@ android/local.properties
 *.jks
 .DS_Store
 ios/build/
+node_modules/
+mobile/build-ios/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/

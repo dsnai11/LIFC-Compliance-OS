@@ -1,0 +1,6 @@
+{
+  "appId": "com.lifc.complianceos",
+  "appName": "LIFC Compliance",
+  "webDir": "launcher",
+  "server": { "androidScheme": "http", "cleartext": true, "allowNavigation": ["*"] }
+}

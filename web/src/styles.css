@@ -1,0 +1,21 @@
+:root{--maroon:#5b0d16;--red:#b3122e;--ink:#1b1f2a;--mut:#5f6677;--line:rgba(91,13,22,.16);--bg:#fbf8f9}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh}
+.center{min-height:100vh;display:grid;place-items:center;padding:18px;background:radial-gradient(500px 400px at 0 0,#ffd3db,transparent 70%),radial-gradient(500px 400px at 100% 100%,#e4e8f0,transparent 70%)}
+.card{width:100%;max-width:420px;background:rgba(255,255,255,.78);border:1px solid #fff;border-radius:24px;padding:26px 22px;box-shadow:0 20px 40px -24px rgba(70,12,24,.35)}
+h1{font-size:20px;margin:4px 0 14px;text-align:center}h2{font-size:17px;margin:0 0 12px}
+label{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+input,select{width:100%;font:inherit;padding:11px;border-radius:12px;border:1px solid var(--line);margin:6px 0 14px;background:#fff}
+button{font:inherit;font-weight:700;color:#fff;border:0;border-radius:12px;padding:11px 16px;cursor:pointer;background:linear-gradient(135deg,#d31b3a,var(--red) 45%,var(--maroon))}
+button.ghost{background:#fff;color:var(--maroon);border:1px solid var(--line)}button:disabled{opacity:.55}
+.full{width:100%}.err{color:#a30c22;font-size:13px;margin:0 0 10px}.hint{color:var(--mut);font-size:12px}
+.shell{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+.side{background:var(--maroon);color:#fff;padding:18px 12px;display:flex;flex-direction:column;gap:6px}
+.side b{padding:0 8px 10px;font-size:15px}.side button{background:transparent;text-align:left;box-shadow:none;font-weight:600}
+.side button.on{background:rgba(255,255,255,.16)}.side .who{margin-top:auto;font-size:12px;opacity:.85;padding:0 8px}
+main{padding:20px;overflow:auto}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.row>div{flex:1;min-width:130px}
+.note{background:#fff7e0;border:1px solid #f0d58a;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14px}
+@media(max-width:700px){.shell{grid-template-columns:1fr}.side{flex-direction:row;overflow:auto;padding:8px}.side b,.side .who{display:none}}

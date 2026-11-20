@@ -144,3 +144,11 @@ def test_last_admin_protected(env):
 
 def mod_ok():
     return "Reviewed – agreed"
+
+
+def test_react_app_served_and_traversal_blocked(mod):
+    c = client(mod)
+    r = c.get("/app/", follow_redirects=False)
+    assert r.status_code in (200, 404)  # 404 only if web/ has not been built
+    assert c.get("/app/..%2f..%2fapp.py").status_code != 200 or "FastAPI" not in c.get("/app/..%2f..%2fapp.py").text
+    assert "from fastapi" not in c.get("/app/../app.py").text

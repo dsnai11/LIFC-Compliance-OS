@@ -4,8 +4,10 @@ Login-based RBI compliance testing for NBFC – Middle Layer (Laxmi India Financ
 
 ```
 compliance-os/
-├── server/            FastAPI + SQLite server and the web app (static/index.html)
-├── android/           Android app (WebView client) – open in Android Studio or build with GitHub Actions
+├── server/            FastAPI + SQLite server; classic web app (static/index.html) and the React build (static/app, served at /app/)
+├── web/               React + TypeScript + Vite client (new). `npm run build` writes to server/static/app
+├── mobile/            Capacitor wrapper that produces the Android APK and iOS app from one codebase (launcher page + server address)
+├── android/, ios/     Earlier hand-written WebView shells (kept for reference; superseded by mobile/)
 ├── deploy/            systemd unit, nginx (HTTPS) config, nightly backup script
 └── .github/workflows/ build-apk.yml – builds the APK with Google's official Android SDK
 ```
@@ -74,3 +76,16 @@ Or use Docker: `docker build -t compliance-os server && docker run -d -p 8080:80
 | CCO | Reviewer rights, plus settings, weightage, library, reference register, unlocking, import and the security log |
 | Viewer | Read-only access to everything, e.g. internal audit or the RBI inspection team on site |
 | Admin | Users, roles, password resets, unlock/disable accounts, security log. Read-only on compliance data |
+
+## React client and Capacitor apps (v2, in progress)
+
+The classic single-file client at `/` is still complete. The React client at `/app/` currently has first-time setup, sign-in, forced password change, the cycle list and Admin user management; testing, review, scoring and the report are still to be ported.
+
+```bash
+cd web && npm install && npm run build          # builds into server/static/app (served at /app/)
+cd ../mobile && npm install && npx cap sync      # copies the launcher page into the native projects
+# Android (needs JDK 21 + Android SDK):  cd android && ./gradlew assembleDebug
+# iOS simulator:  cd ios/App && xcodebuild -scheme App -sdk iphonesimulator -derivedDataPath ../../build-ios CODE_SIGNING_ALLOWED=NO build
+```
+
+The apps open a small bundled page that asks for the server address, then load `<server>/app/` so the session cookie stays same-origin. A signed iOS build for a real iPhone needs an Apple Developer account.
