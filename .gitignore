@@ -16,3 +16,4 @@ mobile/android/build/
 mobile/android/.gradle/
 mobile/build-ios-device/
 mobile/ipa-out/
+server/data-test/

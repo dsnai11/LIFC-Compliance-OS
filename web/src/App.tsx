@@ -6,7 +6,7 @@ type Phase = "loading" | "setup" | "login" | "mustChange" | "app";
 const msg = (e: unknown) => (e instanceof ApiError || e instanceof Error ? e.message : "Something went wrong");
 
 function Field(p: { label: string; value: string; onChange: (v: string) => void; type?: string; auto?: string }) {
-  return (<><label>{p.label}</label><input type={p.type ?? "text"} value={p.value} autoComplete={p.auto} onChange={(e) => p.onChange(e.target.value)} /></>);
+  return (<><label>{p.label}</label><input type={p.type ?? "text"} value={p.value} autoComplete={p.auto} autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={(e) => p.onChange(e.target.value)} /></>);
 }
 
 function Setup({ onDone }: { onDone: () => void }) {
@@ -89,6 +89,7 @@ export default function App() {
     } catch { setPhase("login"); }
   }, []);
   useEffect(() => { void boot(); }, [boot]);
+  useEffect(() => { window.scrollTo(0, 0); }, [phase]);  // keyboard leaves the page scrolled on phones
   if (phase === "loading") return <div className="center"><p className="hint">Loading…</p></div>;
   if (phase === "setup") return <Setup onDone={() => setPhase("login")} />;
   if (phase === "login") return <Login onDone={(u) => { setMe(u); setPhase(u.mustChange ? "mustChange" : "app"); }} />;
