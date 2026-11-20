@@ -14,3 +14,5 @@ mobile/build-ios/
 mobile/android/app/build/
 mobile/android/build/
 mobile/android/.gradle/
+mobile/build-ios-device/
+mobile/ipa-out/
