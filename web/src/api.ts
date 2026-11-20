@@ -23,7 +23,18 @@ export const api = {
   logout: () => call("POST", "/api/logout"),
   me: () => call<{ user: Me }>("GET", "/api/me"),
   changePassword: (old: string, next: string) => call("POST", "/api/password", { old, new: next }),
-  state: () => call<StateResponse>("GET", "/api/state"),
+  state: (rev?: number) => call<StateResponse>("GET", rev === undefined ? "/api/state" : `/api/state?rev=${rev}`),
+  /** Same path-operation protocol as the classic client; the server checks role, maker-checker and proof rules. */
+  ops: (cycleId: string, ops: { op: "set" | "del"; path: (string | number)[]; value?: unknown }[]) => call<StateResponse>("POST", "/api/ops", { cycleId, ops }),
+  deleteAttachment: (id: string, reason: string) => call<StateResponse>("POST", `/api/attach/${id}/delete`, { reason }),
+  upload: async (cycleId: string, code: string, file: File): Promise<StateResponse> => {
+    const fd = new FormData();
+    fd.append("cycleId", cycleId); fd.append("code", code); fd.append("file", file, file.name || `photo_${Date.now()}.jpg`);
+    const r = await fetch("/api/attach", { method: "POST", credentials: "same-origin", headers: { "X-CCT": "1" }, body: fd });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new ApiError(r.status, typeof data.detail === "string" ? data.detail : `Upload failed (${r.status})`);
+    return data as StateResponse;
+  },
   users: () => call<{ users: ManagedUser[] }>("GET", "/api/users"),
   createUser: (username: string, name: string, role: string) => call<{ tempPassword: string }>("POST", "/api/users", { username, name, role }),
   updateUser: (id: number, patch: Record<string, unknown>) => call<{ tempPassword?: string }>("POST", `/api/users/${id}`, patch),

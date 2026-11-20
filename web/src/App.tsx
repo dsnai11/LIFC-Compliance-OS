@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "./api";
-import type { AppState, ManagedUser, Me } from "./types";
+import type { ManagedUser, Me } from "./types";
+import { summarise } from "./model";
+import { StoreProvider, useStore } from "./store";
+import Testing from "./Testing";
 
 type Phase = "loading" | "setup" | "login" | "mustChange" | "app";
 const msg = (e: unknown) => (e instanceof ApiError || e instanceof Error ? e.message : "Something went wrong");
@@ -41,13 +44,15 @@ function ChangePassword({ onDone }: { onDone: () => void }) {
     {err && <p className="err">{err}</p>}<button className="full" onClick={go}>Change password</button></div></div>);
 }
 
-function Cycles({ state }: { state: AppState }) {
-  return (<><h2>Testing cycles</h2>{state.cycles.length === 0 ? <p className="hint">No cycles yet.</p> :
-    <table><thead><tr><th>Cycle</th><th>Status</th><th>Version</th><th>Tested</th></tr></thead><tbody>
-      {state.cycles.map((c) => { const n = Object.values(c.results ?? {}).filter((r) => r.st && r.st !== "NT").length;
-        return <tr key={c.id}><td>{c.name}</td><td>{c.status}</td><td>v{c.version}</td><td>{n} / {state.library.length}</td></tr>; })}
+function Cycles() {
+  const { state } = useStore();
+  if (!state) return <p className="hint">Loading…</p>;
+  return (<><h2>Testing cycles</h2>{state.cycles.length === 0 ? <p className="hint">No cycles yet – a Reviewer or the CCO creates one in the classic client (Setup &amp; Workflow).</p> :
+    <table><thead><tr><th>Cycle</th><th>Status</th><th>Version</th><th>Tested / applicable</th><th>Reviewed</th></tr></thead><tbody>
+      {state.cycles.map((c) => { const s = summarise(state, c, state.library);
+        return <tr key={c.id}><td>{c.name}{c.demo ? " (demo)" : ""}</td><td>{c.status}</td><td>v{c.version}</td><td>{s.tested} / {s.applicable}</td><td>{s.reviewed}</td></tr>; })}
     </tbody></table>}
-    <p className="hint" style={{ marginTop: 12 }}>Testing, review, scoring and the inspection report are being ported from the classic client (still available at /).</p></>);
+    <p className="hint" style={{ marginTop: 12 }}>Scoring, the dashboard and the inspection report are still being ported from the classic client (available at /).</p></>);
 }
 
 function Users() {
@@ -70,14 +75,15 @@ function Users() {
 }
 
 function Shell({ me, onLogout }: { me: Me; onLogout: () => void }) {
-  const [view, setView] = useState<"cycles" | "users">(me.role === "Admin" ? "users" : "cycles");
-  const [state, setState] = useState<AppState | null>(null), [err, setErr] = useState("");
-  useEffect(() => { if (me.role !== "Admin") api.state().then((r) => setState(r.state)).catch((e) => setErr(msg(e))); }, [me.role]);
-  return (<div className="shell"><nav className="side"><b>LIFC Compliance OS</b>
-    {me.role !== "Admin" && <button className={view === "cycles" ? "on" : ""} onClick={() => setView("cycles")}>Cycles</button>}
-    {me.role === "Admin" && <button className={view === "users" ? "on" : ""} onClick={() => setView("users")}>Users</button>}
+  const admin = me.role === "Admin";
+  const [view, setView] = useState<"testing" | "cycles" | "users">(admin ? "users" : "testing");
+  const nav = (v: typeof view, label: string) => <button className={view === v ? "on" : ""} onClick={() => setView(v)}>{label}</button>;
+  const body = view === "users" ? <Users /> : view === "cycles" ? <Cycles /> : <Testing />;
+  const frame = (<div className="shell"><nav className="side"><b>LIFC Compliance OS</b>
+    {admin ? nav("users", "Users") : <>{nav("testing", "Testing")}{nav("cycles", "Cycles")}</>}
     <div className="who">{me.name} · {me.role}</div><button onClick={onLogout}>Sign out</button></nav>
-    <main>{err && <p className="err">{err}</p>}{view === "users" ? <Users /> : state ? <Cycles state={state} /> : <p className="hint">{state === null && !err ? "Loading…" : "No data yet — initialise from the classic client."}</p>}</main></div>);
+    <main>{body}</main></div>);
+  return admin ? frame : <StoreProvider me={me}>{frame}</StoreProvider>;
 }
 
 export default function App() {
