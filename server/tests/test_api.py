@@ -152,3 +152,19 @@ def test_react_app_served_and_traversal_blocked(mod):
     assert r.status_code in (200, 404)  # 404 only if web/ has not been built
     assert c.get("/app/..%2f..%2fapp.py").status_code != 200 or "FastAPI" not in c.get("/app/..%2f..%2fapp.py").text
     assert "from fastapi" not in c.get("/app/../app.py").text
+
+
+def test_setup_token_and_health(tmp_path, monkeypatch):
+    monkeypatch.setenv("CCT_DATA", str(tmp_path))
+    monkeypatch.setenv("CCT_SETUP_TOKEN", "s3cret-token")
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    sys.modules.pop("app", None)
+    m = importlib.import_module("app")
+    c = TestClient(m.app)
+    assert c.get("/healthz").json() == {"ok": True}
+    assert c.get("/api/bootstrap").json()["tokenNeeded"] is True
+    body = {"username": "boss", "name": "Boss", "password": PW}
+    assert c.post("/api/setup", json=body, headers=H).status_code == 403
+    assert c.post("/api/setup", json={**body, "setupToken": "wrong"}, headers=H).status_code == 403
+    assert c.post("/api/setup", json={**body, "setupToken": "s3cret-token"}, headers=H).status_code == 200
+    sys.modules.pop("app", None)

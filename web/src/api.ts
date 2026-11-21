@@ -17,8 +17,8 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
 }
 
 export const api = {
-  bootstrap: () => call<{ setupNeeded: boolean }>("GET", "/api/bootstrap"),
-  setup: (username: string, name: string, password: string) => call("POST", "/api/setup", { username, name, password }),
+  bootstrap: () => call<{ setupNeeded: boolean; tokenNeeded?: boolean }>("GET", "/api/bootstrap"),
+  setup: (username: string, name: string, password: string, setupToken?: string) => call("POST", "/api/setup", { username, name, password, setupToken }),
   login: (username: string, password: string) => call<{ user: Me }>("POST", "/api/login", { username, password }),
   logout: () => call("POST", "/api/logout"),
   me: () => call<{ user: Me }>("GET", "/api/me"),

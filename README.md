@@ -89,3 +89,12 @@ cd ../mobile && npm install && npx cap sync      # copies the launcher page into
 ```
 
 The apps open a small bundled page that asks for the server address, then load `<server>/app/` so the session cookie stays same-origin. A signed iOS build for a real iPhone needs an Apple Developer account.
+
+## Deploy on Railway (live, HTTPS)
+
+1. New Project → **Deploy from GitHub repo** → pick this repo (it builds the root `Dockerfile`; `railway.json` sets the health check).
+2. **Add a Volume** to the service, mount path `/data` (database, evidence files and logs live here — without it, data is lost on every deploy).
+3. **Variables:** `CCT_SETUP_TOKEN` = a long random string (required to create the first administrator, so nobody else can claim it). Optional: `CCT_IDLE_MIN`, `CCT_SESSION_HOURS`, `CCT_MAX_MB`.
+4. **Settings → Networking → Generate Domain** (or attach your own domain). Railway terminates HTTPS; the server sets Secure cookies and HSTS.
+5. Open the URL, create the administrator with the setup token, then create users. Keep replicas at 1.
+6. Phones: web works as-is (install to home screen); in the APK/IPA enter the same `https://…` address on first launch.

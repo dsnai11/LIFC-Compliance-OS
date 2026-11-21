@@ -12,14 +12,16 @@ function Field(p: { label: string; value: string; onChange: (v: string) => void;
   return (<><label>{p.label}</label><input type={p.type ?? "text"} value={p.value} autoComplete={p.auto} autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={(e) => p.onChange(e.target.value)} /></>);
 }
 
-function Setup({ onDone }: { onDone: () => void }) {
+function Setup({ onDone, tokenNeeded }: { onDone: () => void; tokenNeeded: boolean }) {
+  const [tok, setTok] = useState("");
   const [name, setName] = useState(""), [user, setUser] = useState(""), [pw, setPw] = useState(""), [pw2, setPw2] = useState(""), [err, setErr] = useState("");
   const go = async () => {
     if (pw !== pw2) return setErr("Passwords do not match.");
-    try { await api.setup(user.trim(), name.trim(), pw); onDone(); } catch (e) { setErr(msg(e)); }
+    try { await api.setup(user.trim(), name.trim(), pw, tok.trim()); onDone(); } catch (e) { setErr(msg(e)); }
   };
   return (<div className="center"><div className="card"><h1>First-time setup</h1>
     <p className="hint">Create the administrator account. The administrator manages users and roles only.</p>
+    {tokenNeeded && <Field label="Setup token" type="password" value={tok} onChange={setTok} auto="off" />}
     <Field label="Full name" value={name} onChange={setName} /><Field label="Username" value={user} onChange={setUser} auto="username" />
     <Field label="Password" type="password" value={pw} onChange={setPw} auto="new-password" /><Field label="Confirm password" type="password" value={pw2} onChange={setPw2} auto="new-password" />
     <p className="hint">At least 10 characters with three of: lower case, upper case, digit, symbol.</p>{err && <p className="err">{err}</p>}
@@ -87,17 +89,18 @@ function Shell({ me, onLogout }: { me: Me; onLogout: () => void }) {
 }
 
 export default function App() {
-  const [phase, setPhase] = useState<Phase>("loading"), [me, setMe] = useState<Me | null>(null);
+  const [phase, setPhase] = useState<Phase>("loading"), [me, setMe] = useState<Me | null>(null), [tokenNeeded, setTokenNeeded] = useState(false);
   const boot = useCallback(async () => {
     try {
-      if ((await api.bootstrap()).setupNeeded) return setPhase("setup");
+      const b = await api.bootstrap(); setTokenNeeded(!!b.tokenNeeded);
+      if (b.setupNeeded) return setPhase("setup");
       const u = (await api.me()).user; setMe(u); setPhase(u.mustChange ? "mustChange" : "app");
     } catch { setPhase("login"); }
   }, []);
   useEffect(() => { void boot(); }, [boot]);
   useEffect(() => { window.scrollTo(0, 0); }, [phase]);  // keyboard leaves the page scrolled on phones
   if (phase === "loading") return <div className="center"><p className="hint">Loading…</p></div>;
-  if (phase === "setup") return <Setup onDone={() => setPhase("login")} />;
+  if (phase === "setup") return <Setup tokenNeeded={tokenNeeded} onDone={() => setPhase("login")} />;
   if (phase === "login") return <Login onDone={(u) => { setMe(u); setPhase(u.mustChange ? "mustChange" : "app"); }} />;
   if (phase === "mustChange") return <ChangePassword onDone={() => void boot()} />;
   return <Shell me={me!} onLogout={async () => { await api.logout(); setMe(null); setPhase("login"); }} />;

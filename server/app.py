@@ -20,6 +20,7 @@ STATIC = BASE / "static"
 
 IDLE_SEC = int(os.environ.get("CCT_IDLE_MIN", "30")) * 60
 ABS_SEC = int(os.environ.get("CCT_SESSION_HOURS", "12")) * 3600
+SETUP_TOKEN = os.environ.get("CCT_SETUP_TOKEN", "")
 MAX_UPLOAD = int(os.environ.get("CCT_MAX_MB", "25")) * 1024 * 1024
 LOCK_AFTER = 5
 LOCK_MIN = 15
@@ -158,6 +159,8 @@ async def security(req: Request, call_next):
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["Referrer-Policy"] = "no-referrer"
     resp.headers["X-Frame-Options"] = "DENY"
+    if req.url.scheme == "https" or req.headers.get("x-forwarded-proto") == "https":
+        resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     resp.headers["Content-Security-Policy"] = ("default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; "
                                                "script-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
     if req.url.path.startswith("/api/"):
@@ -471,7 +474,13 @@ def state_response(u, st, rev):
 @app.get("/api/bootstrap")
 def bootstrap():
     n = DB.execute("SELECT COUNT(*) n FROM users").fetchone()["n"]
-    return {"setupNeeded": n == 0}
+    return {"setupNeeded": n == 0, "tokenNeeded": bool(SETUP_TOKEN)}
+
+
+@app.get("/healthz")
+def healthz():
+    DB.execute("SELECT 1").fetchone()
+    return {"ok": True}
 
 
 @app.post("/api/setup")
@@ -480,6 +489,9 @@ async def setup(req: Request):
     with LOCK:
         if DB.execute("SELECT COUNT(*) n FROM users").fetchone()["n"]:
             raise HTTPException(409, "Setup already completed.")
+        if SETUP_TOKEN and not hmac.compare_digest(str(body.get("setupToken") or ""), SETUP_TOKEN):
+            seclog("", "SetupDenied", "Wrong or missing setup token", client_ip(req))
+            raise HTTPException(403, "Setup token is wrong or missing.")
         un, nm, pw = (body.get("username") or "").strip(), (body.get("name") or "").strip(), body.get("password") or ""
         if not re.fullmatch(r"[A-Za-z0-9._@-]{3,40}", un) or not nm:
             raise HTTPException(400, "Enter a valid username (3–40 letters, digits, . _ @ -) and full name.")

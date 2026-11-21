@@ -1,0 +1,9 @@
+server/venv
+server/data
+server/data-test
+server/tests
+web/node_modules
+mobile
+android
+ios
+.git
